@@ -33,7 +33,7 @@ public class TicketServiceImplTest {
   TicketServiceImpl ticketService;
 
   @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  public ExpectedException expectedException = ExpectedException.none();
 
   ArgumentCaptor<Long> accountIdForPaymentCaptor;
   ArgumentCaptor<Integer> amountToPayCaptor;
@@ -82,88 +82,82 @@ public class TicketServiceImplTest {
   @Test
   public void whenAPaymentRequestForOneChildWithNoAdultIsMadeThenAnExceptionIsThrown() {
 
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("An adult ticket purchase is required");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(CHILD, 1));
-
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("An adult ticket purchase is required");
   }
 
   @Test
   public void whenAPaymentRequestForOneInfantWithNoAdultIsMadeThenAnExceptionIsThrown() {
 
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("An adult ticket purchase is required");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(INFANT, 1));
-
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("An adult ticket purchase is required");
   }
 
   @Test
   public void whenTheNumberOfRequestedTicketsIsZeroThenAnExceptionIsThrown() {
-    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 0));
 
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid number of tickets requested");
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid number of tickets requested");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 0));
   }
 
   @Test
   public void whenTheNumberOfRequestedTicketsIsNegativeThenAnExceptionIsThrown() {
-    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, -1));
 
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid number of tickets requested");
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid number of tickets requested");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, -1));
   }
 
   @Test
   public void whenTheNumberOfRequestedTicketsIsMoreThanTheLimitThenAnExceptionIsThrown() {
-    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 26));
 
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid number of tickets requested");
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid number of tickets requested");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 26));
   }
 
   /** Invalid request tests */
   @Test
   public void whenTheTicketTypeIsInvalidThenAnExceptionIsThrown() {
 
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid type of ticket requested");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(null, 1));
-
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid type of ticket requested");
   }
 
   @Test
-  public void whenAnEmptyRequestIsReceivedThenAnExceptionIsThrown() {
+  public void whenOneValidAndOneInvalidRequestAreReceivedThenAnExceptionIsThrown() {
 
-    ticketService.purchaseTickets(1L, new TicketTypeRequest(null, 0));
-
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid ticket request");
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid ticket request");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 1), null);
   }
 
   @Test
   public void whenANullRequestIsReceivedThenAnExceptionIsThrown() {
 
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid ticket request");
     ticketService.purchaseTickets(1L, null);
-
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid ticket request");
   }
 
   @Test
   public void whenAnInvalidAccountIdIsReceivedThenAnExceptionIsThrown() {
-    ticketService.purchaseTickets(null, new TicketTypeRequest(ADULT, 1));
 
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid account id");
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid account id");
+    ticketService.purchaseTickets(null, new TicketTypeRequest(ADULT, 1));
   }
 
   @Test
   public void whenAZeroAccountIdIsReceivedThenAnExceptionIsThrown() {
 
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Invalid account id");
     ticketService.purchaseTickets(0L, new TicketTypeRequest(ADULT, 1));
-
-    thrown.expect(InvalidPurchaseException.class);
-    thrown.expectMessage("Invalid account id");
   }
 
 }
