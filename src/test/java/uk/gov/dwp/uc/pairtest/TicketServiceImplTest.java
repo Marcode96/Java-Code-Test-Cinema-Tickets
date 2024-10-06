@@ -68,14 +68,15 @@ public class TicketServiceImplTest {
 
     ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 2),
                                                 new TicketTypeRequest(CHILD, 1),
-                                                new TicketTypeRequest(INFANT, 1));
+                                                new TicketTypeRequest(INFANT, 1),
+                                                new TicketTypeRequest(ADULT, 1));
 
     verify(ticketPaymentService, times(1)).makePayment(accountIdForPaymentCaptor.capture(), amountToPayCaptor.capture());
     verify(seatReservationService, times(1)).reserveSeat(accountIdForSeatReservationCaptor.capture(),seatsReservedCaptor.capture());
     assertEquals("Account id is 1", 1L, accountIdForPaymentCaptor.getValue().longValue());
-    assertEquals("Amount to pay is £65", 65, amountToPayCaptor.getValue().intValue());
+    assertEquals("Amount to pay is £90", 90, amountToPayCaptor.getValue().intValue());
     assertEquals("Account id is 1", 1L, accountIdForSeatReservationCaptor.getValue().longValue());
-    assertEquals("The number of seats reserved is 3", 3, seatsReservedCaptor.getValue().intValue());
+    assertEquals("The number of seats reserved is 4", 4, seatsReservedCaptor.getValue().intValue());
   }
 
   /** Business requirements */
@@ -112,11 +113,21 @@ public class TicketServiceImplTest {
   }
 
   @Test
+  public void whenTheNumberOfRequestedTicketsPerPersonIsMoreThanTheLimitThenAnExceptionIsThrown() {
+
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("Too many tickets");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 26));
+  }
+
+  @Test
   public void whenTheNumberOfRequestedTicketsIsMoreThanTheLimitThenAnExceptionIsThrown() {
 
     expectedException.expect(InvalidPurchaseException.class);
-    expectedException.expectMessage("Invalid number of tickets requested");
-    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 26));
+    expectedException.expectMessage("Too many tickets");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 25),
+                                                new TicketTypeRequest(INFANT, 1),
+                                                new TicketTypeRequest(CHILD, 1));
   }
 
   /** Invalid request tests */
@@ -158,6 +169,26 @@ public class TicketServiceImplTest {
     expectedException.expect(InvalidPurchaseException.class);
     expectedException.expectMessage("Invalid account id");
     ticketService.purchaseTickets(0L, new TicketTypeRequest(ADULT, 1));
+  }
+
+  /** Edge cases */
+  @Test
+  public void whenThereAreMoreInfantsRequestsThenAdultsThenAnExceptionIsThrown() {
+
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("There are not enough adults for infants to seat");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 1),
+                                                new TicketTypeRequest(INFANT, 1),
+                                                new TicketTypeRequest(INFANT, 1));
+  }
+
+  @Test
+  public void whenThereAreMoreInfantsThenAdultsThenAnExceptionIsThrown() {
+
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("There are not enough adults for infants to seat");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 1),
+                                                new TicketTypeRequest(INFANT, 2));
   }
 
 }
