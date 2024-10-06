@@ -92,7 +92,7 @@ public class TicketServiceImplTest {
   public void whenAPaymentRequestForOneInfantWithNoAdultIsMadeThenAnExceptionIsThrown() {
 
     expectedException.expect(InvalidPurchaseException.class);
-    expectedException.expectMessage("An adult ticket purchase is required");
+    expectedException.expectMessage("There are not enough adults for infants to seat");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(INFANT, 1));
   }
 

@@ -99,13 +99,6 @@ public class TicketServiceImpl implements TicketService {
         if(ticketTypeRequests == null || ticketTypeRequests.length == 0) {
             throw new InvalidPurchaseException("Invalid ticket request");
         }
-        // We need to check that there are enough adults compared to the infants
-        if (Arrays.stream(ticketTypeRequests).filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.INFANT)
-                .mapToInt(TicketTypeRequest::getNoOfTickets).sum() >
-            Arrays.stream(ticketTypeRequests).filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.ADULT)
-                .mapToInt(TicketTypeRequest::getNoOfTickets).sum()) {
-            throw new InvalidPurchaseException("There are not enough adults for infants to seat");
-        }
         for (TicketTypeRequest ticketTypeRequest : ticketTypeRequests) {
             if(ticketTypeRequest == null) {
                 throw new InvalidPurchaseException("Invalid ticket request");
@@ -116,6 +109,13 @@ public class TicketServiceImpl implements TicketService {
             if(ticketTypeRequest.getNoOfTickets() <= 0) {
                 throw new InvalidPurchaseException("Invalid number of tickets requested");
             }
+        }
+        // We need to check that there are enough adults compared to the infants
+        if (Arrays.stream(ticketTypeRequests).filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.INFANT)
+            .mapToInt(TicketTypeRequest::getNoOfTickets).sum() >
+            Arrays.stream(ticketTypeRequests).filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.ADULT)
+                .mapToInt(TicketTypeRequest::getNoOfTickets).sum()) {
+            throw new InvalidPurchaseException("There are not enough adults for infants to seat");
         }
     }
 
