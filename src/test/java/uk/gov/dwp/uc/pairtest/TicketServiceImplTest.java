@@ -23,6 +23,8 @@ import static uk.gov.dwp.uc.pairtest.domain.TicketTypeRequest.Type.INFANT;
 @RunWith(MockitoJUnitRunner.class)
 public class TicketServiceImplTest {
 
+  private static final int MAX_NUMBER_OF_TICKETS = 25;
+
   @Mock
   TicketPaymentService ticketPaymentService;
 
@@ -92,7 +94,7 @@ public class TicketServiceImplTest {
   public void whenAPaymentRequestForOneInfantWithNoAdultIsMadeThenAnExceptionIsThrown() {
 
     expectedException.expect(InvalidPurchaseException.class);
-    expectedException.expectMessage("There are not enough adults for infants to seat");
+    expectedException.expectMessage("An adult ticket purchase is required");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(INFANT, 1));
   }
 
@@ -116,7 +118,7 @@ public class TicketServiceImplTest {
   public void whenTheNumberOfRequestedTicketsPerPersonIsMoreThanTheLimitThenAnExceptionIsThrown() {
 
     expectedException.expect(InvalidPurchaseException.class);
-    expectedException.expectMessage("Too many tickets");
+    expectedException.expectMessage("You can only purchase up to " + MAX_NUMBER_OF_TICKETS + " tickets");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 26));
   }
 
@@ -124,7 +126,7 @@ public class TicketServiceImplTest {
   public void whenTheNumberOfRequestedTicketsIsMoreThanTheLimitThenAnExceptionIsThrown() {
 
     expectedException.expect(InvalidPurchaseException.class);
-    expectedException.expectMessage("Too many tickets");
+    expectedException.expectMessage("You can only purchase up to " + MAX_NUMBER_OF_TICKETS + " tickets");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 25),
                                                 new TicketTypeRequest(INFANT, 1),
                                                 new TicketTypeRequest(CHILD, 1));
@@ -189,6 +191,14 @@ public class TicketServiceImplTest {
     expectedException.expectMessage("There are not enough adults for infants to seat");
     ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 1),
                                                 new TicketTypeRequest(INFANT, 2));
+  }
+
+  @Test
+  public void whenATicketRequestWithOneInfantOverTheLimitIsMadeThenAnExceptionIsThrown() {
+    expectedException.expect(InvalidPurchaseException.class);
+    expectedException.expectMessage("You can only purchase up to " + MAX_NUMBER_OF_TICKETS + " tickets");
+    ticketService.purchaseTickets(1L, new TicketTypeRequest(ADULT, 25),
+                                                new TicketTypeRequest(INFANT, 1));
   }
 
 }
