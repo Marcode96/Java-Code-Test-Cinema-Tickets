@@ -12,6 +12,13 @@ public class TicketServiceImpl implements TicketService {
      * Should only have private methods other than the one below.
      */
 
+    private static final int ADULT_TICKET_PRICE = 25;
+    private static final int CHILD_TICKET_PRICE = 15;
+    // For now, it could make more sense to not define this, but this might change in the future
+    private static final int INFANT_TICKET_PRICE = 0;
+
+    private static final int MAX_NUMBER_OF_TICKETS = 25;
+
     /** Ticket payment service. */
     private final TicketPaymentService ticketPaymentService;
 
@@ -44,19 +51,10 @@ public class TicketServiceImpl implements TicketService {
      * This method calculate the relevant number of seats to book considering the business rules,
      * i.e. based on the type of ticket requested
      * @param ticketTypeRequests the request
-     * @returnn numberOfSeatsToReserve number of seats to reserve
+     * @return numberOfSeatsToReserve number of seats to reserve
      */
-    private int calculateNumberOfSeatsToReserve(TicketTypeRequest[] ticketTypeRequests) throws InvalidPurchaseException {
+    private int calculateNumberOfSeatsToReserve(TicketTypeRequest[] ticketTypeRequests) {
 
-        // First we need to check that at least one adult is present
-        if (Arrays.stream(ticketTypeRequests).noneMatch(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.ADULT)) {
-            throw new InvalidPurchaseException("An adult ticket purchase is required");
-        }
-        // Then we need to make sure that the total is not over the limit of 25 tickets
-        if (Arrays.stream(ticketTypeRequests).mapToInt(TicketTypeRequest::getNoOfTickets).sum() > 25) {
-            throw new InvalidPurchaseException("Too many tickets");
-        }
-        // And finally we calculate the number of seats to book
         int numberOfSeatsToReserve = 0;
         for (TicketTypeRequest ticketTypeRequest : ticketTypeRequests) {
 
@@ -80,11 +78,17 @@ public class TicketServiceImpl implements TicketService {
     private int calculateAmountToPay(TicketTypeRequest[] ticketTypeRequests) {
         int amountToPay = 0;
         for (TicketTypeRequest ticketTypeRequest : ticketTypeRequests) {
-            if(ticketTypeRequest.getTicketType() == Type.ADULT) {
-                amountToPay += 25 * ticketTypeRequest.getNoOfTickets();
-            }
-            if(ticketTypeRequest.getTicketType() == Type.CHILD) {
-                amountToPay += 15 * ticketTypeRequest.getNoOfTickets();
+            switch(ticketTypeRequest.getTicketType()) {
+                case ADULT:
+                    amountToPay += ADULT_TICKET_PRICE * ticketTypeRequest.getNoOfTickets();
+                    break;
+                case CHILD:
+                    amountToPay += CHILD_TICKET_PRICE * ticketTypeRequest.getNoOfTickets();
+                    break;
+                case INFANT:
+                    // As mentioned in the comment above, for now we could do without this, but this is to future-proof the code
+                    amountToPay += INFANT_TICKET_PRICE * ticketTypeRequest.getNoOfTickets();
+                    break;
             }
         }
         return amountToPay;
@@ -110,7 +114,15 @@ public class TicketServiceImpl implements TicketService {
                 throw new InvalidPurchaseException("Invalid number of tickets requested");
             }
         }
-        // We need to check that there are enough adults compared to the infants
+        // After the basic validation, we need to check that at least one adult is present
+        if (Arrays.stream(ticketTypeRequests).noneMatch(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.ADULT)) {
+            throw new InvalidPurchaseException("An adult ticket purchase is required");
+        }
+        // We also need to make sure that the total is not over the limit of 25 tickets
+        if (Arrays.stream(ticketTypeRequests).mapToInt(TicketTypeRequest::getNoOfTickets).sum() > MAX_NUMBER_OF_TICKETS) {
+            throw new InvalidPurchaseException("You can only purchase up to " + MAX_NUMBER_OF_TICKETS + " tickets");
+        }
+        // And check that there are enough adults compared to the infants
         if (Arrays.stream(ticketTypeRequests).filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.INFANT)
             .mapToInt(TicketTypeRequest::getNoOfTickets).sum() >
             Arrays.stream(ticketTypeRequests).filter(ticketTypeRequest -> ticketTypeRequest.getTicketType() == Type.ADULT)
